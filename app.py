@@ -43,7 +43,7 @@ def get_jwt_token_sync(region):
     "BR": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
     "US": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
     "SAC": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
-    "BD": "https://star-jwt-gen.vercel.app/token?uid=4664973977&password=S_Y0QTY_BY_STAR_GMR_NRETK",
+    "BD": "https://star-jwt-gen.vercel.app/token?uid=4331389599&password=Sumon523022_BREXX_4KQT9",
     "ID": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
     "PK": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
     "VN": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
