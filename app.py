@@ -39,7 +39,7 @@ def get_jwt_token_sync(region):
     """Fetch JWT token synchronously for a region."""
     global jwt_token
     endpoints = {
-    "IND": "http://star-jwt-gen.vercel.app/token?uid=4657633505&password=S_47O7O_BY_STAR_GMR_E65Q7",
+    "IND": "http://star-jwt-gen.vercel.app/token?uid=4569404695&password=RAGHAVLIKESBOT_RAGHAV_2THCG",
     "BR": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
     "US": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
     "SAC": "http://star-jwt-gen.vercel.app/token?uid=4724874406&password=DANGER-LPN34CEIS-CORE",
