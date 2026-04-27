@@ -52,11 +52,11 @@ async def json_to_proto(json_data: str, proto_message: Message) -> bytes:
 def get_account_credentials(region: str) -> str:
     r = region.upper()
     if r == "IND":
-        return "uid=4569404695&password=RAGHAVLIKESBOT_RAGHAV_2THCG"
+        return "uid=3933356115&password=CA6DDAEE7F32A95D6BC17B15B8D5C59E091338B4609F25A1728720E8E4C107C4"
     elif r in {"BR", "US", "SAC", "NA"}:
-        return "uid=4514032809&password=F56CBAFE83A2161F3DE643FD2321C1223B35A6144D08F26A06D405A7A69A149E"
+        return "uid=4044223479&password=EB067625F1E2CB705C7561747A46D502480DC5D41497F4C90F3FDBC73B8082ED"
     else:
-        return "uid=4331389599&password=Sumon523022_BREXX_4KQT9"
+        return "uid=4108414251&password=E4F9C33BBEB23C0DA0AD7E60F63C8A05D6A878798E3CD32C4E2314C1EEFD4F72"
 
 # === Token Generation ===
 
@@ -139,7 +139,7 @@ def cached_endpoint(ttl=300):
 
 # === Flask Routes ===
 
-@app.route('/accinfo')
+@app.route('/player-info')
 @cached_endpoint()
 def get_account_info():
     uid = request.args.get('uid')
