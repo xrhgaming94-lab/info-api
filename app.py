@@ -1,204 +1,243 @@
-import asyncio
-import time
-import httpx
-import json
-from collections import defaultdict
-from functools import wraps
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from cachetools import TTLCache
-from typing import Tuple
-from proto import FreeFire_pb2, main_pb2, AccountPersonalShow_pb2
-from google.protobuf import json_format, message
-from google.protobuf.message import Message
+#MADE BY @STAR_GMR
 from Crypto.Cipher import AES
-import base64
-
-# === Settings ===
-
-MAIN_KEY = base64.b64decode('WWcmdGMlREV1aDYlWmNeOA==')
-MAIN_IV = base64.b64decode('Nm95WkRyMjJFM3ljaGpNJQ==')
-RELEASEVERSION = "OB53"
-USERAGENT = "Dalvik/2.1.0 (Linux; U; Android 13; CPH2095 Build/RKQ1.211119.001)"
-SUPPORTED_REGIONS = {"IND", "BR", "US", "SAC", "NA", "SG", "RU", "ID", "TW", "VN", "TH", "ME", "PK", "CIS", "BD", "EUROPE"}
-
-# === Flask App Setup ===
+from Crypto.Util.Padding import pad
+import binascii
+import requests
+from flask import Flask, jsonify, request
+from data_pb2 import AccountPersonalShowInfo
+from google.protobuf.json_format import MessageToDict
+import uid_generator_pb2
+import threading
+import time
 
 app = Flask(__name__)
-CORS(app)
-cache = TTLCache(maxsize=100, ttl=300)
-cached_tokens = defaultdict(dict)
-uid_region_cache = {}
 
-# === Helper Functions ===
+jwt_token = None
+jwt_lock = threading.Lock()
+region_cache = {}
 
-def pad(text: bytes) -> bytes:
-    padding_length = AES.block_size - (len(text) % AES.block_size)
-    return text + bytes([padding_length] * padding_length)
+# ---------------- JWT CONFIG ----------------
+JWT_API = "https://star-jwt-gen.vercel.app/token"
 
-def aes_cbc_encrypt(key: bytes, iv: bytes, plaintext: bytes) -> bytes:
-    aes = AES.new(key, AES.MODE_CBC, iv)
-    return aes.encrypt(pad(plaintext))
+JWT_CREDENTIALS = {
+    "IND": {"uid": "4569404695", "password": "RAGHAVLIKESBOT_RAGHAV_2THCG"},
+    "BD":  {"uid": "4331389599", "password": "Sumon523022_BREXX_4KQT9"},
+    "ME":  {"uid": "4275417742", "password": "CCBD38AAC5A1FA5807FD683B6DD0EE6C5F4F7447DD51C6D30062CD425B10E493"},
+    "PK":  {"uid": "4680926895", "password": "gamer-07G3N3MND-X64"},
+    "TH":  {"uid": "4331389599", "password": "Sumon523022_BREXX_4KQT9"},
+    "BR":  {"uid": "4514032809", "password": "F56CBAFE83A2161F3DE643FD2321C1223B35A6144D08F26A06D405A7A69A149E"},
+    "VN":  {"uid": "4331389599", "password": "Sumon523022_BREXX_4KQT9"},
+    "SAC":  {"uid": "4514032809", "password": "F56CBAFE83A2161F3DE643FD2321C1223B35A6144D08F26A06D405A7A69A149E"},
+    "ID":  {"uid": "4708244360", "password": "IDOY-QSKOPFJYU-SG"},
+}
 
-def decode_protobuf(encoded_data: bytes, message_type: message.Message) -> message.Message:
-    instance = message_type()
-    instance.ParseFromString(encoded_data)
-    return instance
-
-async def json_to_proto(json_data: str, proto_message: Message) -> bytes:
-    json_format.ParseDict(json.loads(json_data), proto_message)
-    return proto_message.SerializeToString()
-
-def get_account_credentials(region: str) -> str:
-    r = region.upper()
-    if r == "IND":
-        return "uid=3933356115&password=CA6DDAEE7F32A95D6BC17B15B8D5C59E091338B4609F25A1728720E8E4C107C4"
-    elif r in {"BR", "US", "SAC", "NA"}:
-        return "uid=4044223479&password=EB067625F1E2CB705C7561747A46D502480DC5D41497F4C90F3FDBC73B8082ED"
-    else:
-        return "uid=4108414251&password=E4F9C33BBEB23C0DA0AD7E60F63C8A05D6A878798E3CD32C4E2314C1EEFD4F72"
-
-# === Token Generation (On-Demand) ===
-
-async def get_access_token(account: str):
-    url = "https://ffmconnect.live.gop.garenanow.com/oauth/guest/token/grant"
-    payload = account + "&response_type=token&client_type=2&client_secret=2ee44819e9b4598845141067b281621874d0d5d7af9d8f7e00c1e54715b7d1e3&client_id=100067"
-    headers = {'User-Agent': USERAGENT, 'Connection': "Keep-Alive", 'Accept-Encoding': "gzip", 'Content-Type': "application/x-www-form-urlencoded"}
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(url, data=payload, headers=headers)
-        data = resp.json()
-        return data.get("access_token", "0"), data.get("open_id", "0")
-
-async def create_jwt(region: str):
-    account = get_account_credentials(region)
-    token_val, open_id = await get_access_token(account)
-    body = json.dumps({"open_id": open_id, "open_id_type": "4", "login_token": token_val, "orign_platform_type": "4"})
-    proto_bytes = await json_to_proto(body, FreeFire_pb2.LoginReq())
-    payload = aes_cbc_encrypt(MAIN_KEY, MAIN_IV, proto_bytes)
-    url = "https://loginbp.ggblueshark.com/MajorLogin"
-    headers = {'User-Agent': USERAGENT, 'Connection': "Keep-Alive", 'Accept-Encoding': "gzip",
-               'Content-Type': "application/octet-stream", 'Expect': "100-continue", 'X-Unity-Version': "2018.4.11f1",
-               'X-GA': "v1 1", 'ReleaseVersion': RELEASEVERSION}
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(url, data=payload, headers=headers)
-        msg = json.loads(json_format.MessageToJson(decode_protobuf(resp.content, FreeFire_pb2.LoginRes)))
-        cached_tokens[region] = {
-            'token': f"Bearer {msg.get('token','0')}",
-            'region': msg.get('lockRegion','0'),
-            'server_url': msg.get('serverUrl','0'),
-            'expires_at': time.time() + 25200  # 7 hours validity
-        }
-
-# === Token Check on Every Request ===
-
-async def get_token_info(region: str) -> Tuple[str,str,str]:
-    info = cached_tokens.get(region)
-    
-    # Token expired or doesn't exist? Create new one
-    if not info or time.time() >= info['expires_at']:
-        await create_jwt(region)
-        info = cached_tokens[region]
-    
-    return info['token'], info['region'], info['server_url']
-
-async def GetAccountInformation(uid, unk, region, endpoint):
-    payload = await json_to_proto(json.dumps({'a': uid, 'b': unk}), main_pb2.GetPlayerPersonalShow())
-    data_enc = aes_cbc_encrypt(MAIN_KEY, MAIN_IV, payload)
-    token, lock, server = await get_token_info(region)  # Auto-refresh if expired
-    headers = {'User-Agent': USERAGENT, 'Connection': "Keep-Alive", 'Accept-Encoding': "gzip",
-               'Content-Type': "application/octet-stream", 'Expect': "100-continue",
-               'Authorization': token, 'X-Unity-Version': "2018.4.11f1", 'X-GA': "v1 1",
-               'ReleaseVersion': RELEASEVERSION}
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(server+endpoint, data=data_enc, headers=headers)
-        return json.loads(json_format.MessageToJson(decode_protobuf(resp.content, AccountPersonalShow_pb2.AccountPersonalShowInfo)))
-
-def add_prime_level_to_response(response_data):
-    prime_info = response_data.get("primeInfo", {})
-    return response_data
-
-# === Caching Decorator ===
-
-def cached_endpoint(ttl=300):
-    def decorator(fn):
-        @wraps(fn)
-        def wrapper(*a, **k):
-            key = (request.path, tuple(request.args.items()))
-            if key in cache:
-                return cache[key]
-            res = fn(*a, **k)
-            cache[key] = res
-            return res
-        return wrapper
-    return decorator
-
-# === Flask Routes ===
-
-@app.route('/player-info')
-@cached_endpoint()
-def get_account_info():
-    uid = request.args.get('uid')
-    if not uid:
-        return jsonify({"error": "Please provide UID."}), 400
-
-    # Check cached region for UID
-    if uid in uid_region_cache:
-        try:
-            return_data = asyncio.run(GetAccountInformation(uid, "7", uid_region_cache[uid], "/GetPlayerPersonalShow"))
-            return_data = add_prime_level_to_response(return_data)
-            formatted_json = json.dumps(return_data, indent=2, ensure_ascii=False)
-            return formatted_json, 200, {'Content-Type': 'application/json; charset=utf-8'}
-        except:
-            pass  # fallback to testing all regions
-
-    for region in SUPPORTED_REGIONS:
-        try:
-            return_data = asyncio.run(GetAccountInformation(uid, "7", region, "/GetPlayerPersonalShow"))
-            uid_region_cache[uid] = region
-            return_data = add_prime_level_to_response(return_data)
-            formatted_json = json.dumps(return_data, indent=2, ensure_ascii=False)
-            return formatted_json, 200, {'Content-Type': 'application/json; charset=utf-8'}
-        except:
-            continue
-
-    return jsonify({"error": "UID not found in any region."}), 404
-
-@app.route('/refresh', methods=['GET','POST'])
-def refresh_tokens_endpoint():
-    """Manual refresh endpoint - call this to refresh all tokens"""
+# ---------------- REGION DETECTION ----------------
+def detect_region(uid):
+    """Detect region automatically using topup.pk API"""
     try:
-        # Refresh all regions' tokens
-        async def refresh_all():
-            tasks = [create_jwt(r) for r in SUPPORTED_REGIONS]
-            await asyncio.gather(*tasks)
+        headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "en-MM,en-US;q=0.9,en;q=0.8",
+            "Content-Type": "application/json",
+            "Origin": "https://topup.pk",
+            "Referer": "https://topup.pk/",
+            "sec-ch-ua": '"Not)A;Brand";v="8", "Chromium";v="138", "Android WebView";v="138"',
+            "sec-ch-ua-mobile": "?1",
+            "sec-ch-ua-platform": '"Android"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 15; RMX5070 Build/UKQ1.231108.001) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.7204.157 Mobile Safari/537.36",
+            "X-Requested-With": "mark.via.gp",
+            "Cookie": "source=mb; region=PK; mspid2=13c49fb51ece78886ebf7108a4907756; _fbp=fb.1.1753985808817.794945392376454660; language=en; datadome=WQaG3HalUB3PsGoSXY3TdcrSQextsSFwkOp1cqZtJ7Ax4YkiERHUgkgHlEAIccQO~w8dzTGM70D9SzaH7vymmEqOrVeX5pIsPVE22Uf3TDu6W3WG7j36ulnTg2DltRO7; session_key=hq02g63z3zjcumm76mafcooitj7nc79y",
+        }
         
-        asyncio.run(refresh_all())
-        return jsonify({'message': 'Tokens refreshed for all regions.'}), 200
+        payload = {
+            "app_id": 100067,
+            "login_id": str(uid)
+        }
+        
+        response = requests.post("https://topup.pk/api/auth/player_id_login", headers=headers, json=payload, timeout=10)
+        data = response.json() if response.text else {}
+        
+        region = data.get('region', '').upper()
+        
+        # Map regions to supported format
+        region_map = {
+            'IN': 'IND', 'INDIA': 'IND',
+            'BD': 'BD', 'BANGLADESH': 'BD',
+            'PK': 'PK', 'PAKISTAN': 'PK',
+            'ME': 'ME',
+            'BR': 'BR', 'BRAZIL': 'BR',
+            'TH': 'TH', 'THAILAND': 'TH',
+            'VN': 'VN', 'VIETNAM': 'VN',
+            'ID': 'ID', 'INDONESIA': 'ID'
+        }
+        
+        detected = region_map.get(region, 'IND')
+        
+        if detected in JWT_CREDENTIALS:
+            return detected
+        return 'IND'
+        
     except Exception as e:
-        return jsonify({'error': f'Refresh failed: {e}'}), 500
+        print(f"[REGION DETECTION ERROR] {e}")
+        return 'IND'
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint for Vercel"""
+# ---------------- JWT HANDLING ----------------
+def get_jwt_token_sync(region):
+    global jwt_token
+
+    creds = JWT_CREDENTIALS.get(region, JWT_CREDENTIALS["IND"])
+    url = f"{JWT_API}?uid={creds['uid']}&password={creds['password']}"
+
+    with jwt_lock:
+        try:
+            r = requests.get(url, timeout=10)
+            data = r.json()
+            if isinstance(data, dict) and "token" in data:
+                jwt_token = data["token"]
+                return jwt_token
+        except Exception as e:
+            print("[JWT ERROR]", e)
+
+    return None
+
+def ensure_jwt_token_sync(region):
+    global jwt_token
+    if not jwt_token:
+        return get_jwt_token_sync(region)
+    return jwt_token
+
+def jwt_token_updater(region):
+    while True:
+        get_jwt_token_sync(region)
+        time.sleep(300)
+
+# ---------------- API ENDPOINT ----------------
+def get_api_endpoint(region):
+    endpoints = {
+        "IND": "https://client.ind.freefiremobile.com/GetPlayerPersonalShow",
+        "BD":  "https://clientbp.ggpolarbear.com/GetPlayerPersonalShow",
+        "ME":  "https://clientbp.ggpolarbear.com/GetPlayerPersonalShow",
+        "PK":  "https://clientbp.ggpolarbear.com/GetPlayerPersonalShow",
+        "TH":  "https://clientbp.ggpolarbear.com/GetPlayerPersonalShow",
+        "BR":  "https://client.us.freefiremobile.com/GetPlayerPersonalShow",
+        "VN":  "https://clientbp.ggpolarbear.com/GetPlayerPersonalShow",
+        "SAC":  "https://client.us.freefiremobile.com/GetPlayerPersonalShow",
+        "ID":  "https://clientbp.ggpolarbear.com/GetPlayerPersonalShow",
+    }
+    return endpoints.get(region, endpoints["IND"])
+
+# ---------------- AES ----------------
+AES_KEY = "Yg&tc%DEuh6%Zc^8"
+AES_IV  = "6oyZDr22E3ychjM%"
+
+def encrypt_aes(hex_data):
+    cipher = AES.new(AES_KEY.encode()[:16], AES.MODE_CBC, AES_IV.encode()[:16])
+    padded = pad(bytes.fromhex(hex_data), AES.block_size)
+    encrypted = cipher.encrypt(padded)
+    return binascii.hexlify(encrypted).decode()
+
+# ---------------- MAIN API CALL ----------------
+def call_api(enc_hex, region):
+    token = ensure_jwt_token_sync(region)
+    if not token:
+        raise Exception("JWT token not available")
+
+    headers = {
+        "User-Agent": "Dalvik/2.1.0 (Linux; Android 9)",
+        "Authorization": f"Bearer {token}",
+        "X-Unity-Version": "2018.4.11f1",
+        "X-GA": "v1 1",
+        "ReleaseVersion": "OB53",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    r = requests.post(
+        get_api_endpoint(region),
+        headers=headers,
+        data=bytes.fromhex(enc_hex),
+        timeout=10
+    )
+
+    return r.content.hex()
+
+# ---------------- ROUTES ----------------
+@app.route("/accinfo")
+def info():
+    try:
+        uid = request.args.get("uid")
+        region = request.args.get("region")  # Optional now
+        
+        if not uid:
+            return jsonify({"error": "UID required"}), 400
+        
+        # Auto-detect region if not provided
+        auto_detected = False
+        if not region:
+            region = detect_region(uid)
+            auto_detected = True
+            print(f"[AUTO DETECT] UID {uid} -> Region {region}")
+        
+        region = region.upper()
+        
+        # Validate region
+        valid_regions = ["IND", "BD", "PK", "ME", "BR", "TH", "VN", "SAC", "ID"]
+        if region not in valid_regions:
+            return jsonify({"error": f"Invalid region: {region}. Valid regions: {', '.join(valid_regions)}"}), 400
+
+        # Start JWT updater thread (only once per region)
+        if region not in region_cache:
+            region_cache[region] = True
+            threading.Thread(target=jwt_token_updater, args=(region,), daemon=True).start()
+
+        msg = uid_generator_pb2.uid_generator()
+        msg.saturn_ = int(uid)
+        msg.garena = 1
+
+        hex_data = binascii.hexlify(msg.SerializeToString()).decode()
+        encrypted = encrypt_aes(hex_data)
+
+        api_hex = call_api(encrypted, region)
+
+        pb = AccountPersonalShowInfo()
+        pb.ParseFromString(bytes.fromhex(api_hex))
+        data = MessageToDict(pb)
+
+        data["Developer"] = "@STAR_GMR"
+        data["Channel"] = "@STAR_METHODE"
+        data["Region"] = region
+        data["Auto_Detected"] = auto_detected
+        data["Version"] = "OB53"
+
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/")
+def home():
     return jsonify({
-        'status': 'healthy',
-        'cached_tokens': len(cached_tokens),
-        'regions': list(SUPPORTED_REGIONS)
-    }), 200
+        "message": "Free Fire Account Info API with Auto Region Detection",
+        "developer": "@STAR_GMR",
+        "channel": "@STAR_METHODE",
+        "endpoint": "/accinfo?uid=UID&region=IND (region optional)",
+        "example": {
+            "with_region": "http://localhost:8080/accinfo?uid=1868812498&region=IND",
+            "auto_region": "http://localhost:8080/accinfo?uid=1868812498"
+        }
+    })
 
-# === Startup (No Background Task) ===
-
-async def startup():
-    """Initialize tokens once on startup"""
-    print("Initializing tokens for all regions...")
-    tasks = [create_jwt(r) for r in SUPPORTED_REGIONS]
-    await asyncio.gather(*tasks)
-    print(f"Tokens initialized for {len(cached_tokens)} regions")
-
-# For local development
-if __name__ == '__main__':
-    asyncio.run(startup())
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
-# For Vercel serverless (no startup async)
-# Tokens will be created on-demand when first request comes
+# ---------------- RUN ----------------
+if __name__ == "__main__":
+    print("""
+    ╔══════════════════════════════════════════╗
+    ║   Free Fire API with Auto Region         ║
+    ║   Developer: @STAR_GMR                   ║
+    ║   Channel: @STAR_METHODE                 ║
+    ╚══════════════════════════════════════════╝
+    """)
+    ensure_jwt_token_sync("IND")
+    app.run(host="0.0.0.0", port=8080, debug=False, threaded=True)
