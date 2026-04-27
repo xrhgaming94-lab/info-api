@@ -119,7 +119,7 @@ def cached_endpoint(ttl=300):
         return wrapper
     return decorator
 
-@app.route('/player-info')
+@app.route('/accinfo')
 def get_account_info():
     uid = request.args.get('uid')
     if not uid:
