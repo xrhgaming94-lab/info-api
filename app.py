@@ -1,4 +1,6 @@
-import asyncio
+# INFO API SRC BYY 
+# POWERED BY : @STAR_GMR
+# CHANNEL : @STAR_METHODE
 import time
 import httpx
 import json
@@ -8,13 +10,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from cachetools import TTLCache
 from typing import Tuple
-from proto import FreeFire_pb2, main_pb2, AccountPersonalShow_pb2
-from google.protobuf import json_format, message
-from google.protobuf.message import Message
 from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
 import base64
 
-# === Settings ===
+from proto import FreeFire_pb2, main_pb2, AccountPersonalShow_pb2
+from google.protobuf import json_format
+from google.protobuf.message import Message
 
 MAIN_KEY = base64.b64decode('WWcmdGMlREV1aDYlWmNeOA==')
 MAIN_IV = base64.b64decode('Nm95WkRyMjJFM3ljaGpNJQ==')
@@ -22,25 +24,18 @@ RELEASEVERSION = "OB53"
 USERAGENT = "Dalvik/2.1.0 (Linux; U; Android 13; CPH2095 Build/RKQ1.211119.001)"
 SUPPORTED_REGIONS = {"IND", "BR", "US", "SAC", "NA", "SG", "RU", "ID", "TW", "VN", "TH", "ME", "PK", "CIS", "BD", "EUROPE"}
 
-# === Flask App Setup ===
-
 app = Flask(__name__)
 CORS(app)
 cache = TTLCache(maxsize=100, ttl=300)
 cached_tokens = defaultdict(dict)
 uid_region_cache = {}
 
-# === Helper Functions ===
-
-def pad(text: bytes) -> bytes:
-    padding_length = AES.block_size - (len(text) % AES.block_size)
-    return text + bytes([padding_length] * padding_length)
-
 def aes_cbc_encrypt(key: bytes, iv: bytes, plaintext: bytes) -> bytes:
-    aes = AES.new(key, AES.MODE_CBC, iv)
-    return aes.encrypt(pad(plaintext))
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    padded_data = pad(plaintext, AES.block_size)
+    return cipher.encrypt(padded_data)
 
-def decode_protobuf(encoded_data: bytes, message_type: message.Message) -> message.Message:
+def decode_protobuf(encoded_data: bytes, message_type: Message) -> Message:
     instance = message_type()
     instance.ParseFromString(encoded_data)
     return instance
@@ -58,8 +53,6 @@ def get_account_credentials(region: str) -> str:
     else:
         return "uid=4331389599&password=Sumon523022_BREXX_4KQT9"
 
-# === Token Generation ===
-
 async def get_access_token(account: str):
     url = "https://ffmconnect.live.gop.garenanow.com/oauth/guest/token/grant"
     payload = account + "&response_type=token&client_type=2&client_secret=2ee44819e9b4598845141067b281621874d0d5d7af9d8f7e00c1e54715b7d1e3&client_id=100067"
@@ -75,7 +68,7 @@ async def create_jwt(region: str):
     body = json.dumps({"open_id": open_id, "open_id_type": "4", "login_token": token_val, "orign_platform_type": "4"})
     proto_bytes = await json_to_proto(body, FreeFire_pb2.LoginReq())
     payload = aes_cbc_encrypt(MAIN_KEY, MAIN_IV, proto_bytes)
-    url = "https://loginbp.ggpolarbear.com/MajorLogin"
+    url = "https://loginbp.ggblueshark.com/MajorLogin"
     headers = {'User-Agent': USERAGENT, 'Connection': "Keep-Alive", 'Accept-Encoding': "gzip",
                'Content-Type': "application/octet-stream", 'Expect': "100-continue", 'X-Unity-Version': "2018.4.11f1",
                'X-GA': "v1 1", 'ReleaseVersion': RELEASEVERSION}
@@ -88,15 +81,6 @@ async def create_jwt(region: str):
             'server_url': msg.get('serverUrl','0'),
             'expires_at': time.time() + 25200
         }
-
-async def initialize_tokens():
-    tasks = [create_jwt(r) for r in SUPPORTED_REGIONS]
-    await asyncio.gather(*tasks)
-
-async def refresh_tokens_periodically():
-    while True:
-        await asyncio.sleep(25200)
-        await initialize_tokens()
 
 async def get_token_info(region: str) -> Tuple[str,str,str]:
     info = cached_tokens.get(region)
@@ -118,7 +102,12 @@ async def GetAccountInformation(uid, unk, region, endpoint):
         resp = await client.post(server+endpoint, data=data_enc, headers=headers)
         return json.loads(json_format.MessageToJson(decode_protobuf(resp.content, AccountPersonalShow_pb2.AccountPersonalShowInfo)))
 
-# === Caching Decorator ===
+def add_prime_level_to_response(response_data):
+    if "primeInfo" in response_data:
+        if "basicInfo" in response_data:
+            response_data["basicInfo"]["primeInfo"] = response_data["primeInfo"]
+        del response_data["primeInfo"]
+    return response_data
 
 def cached_endpoint(ttl=300):
     def decorator(fn):
@@ -133,49 +122,60 @@ def cached_endpoint(ttl=300):
         return wrapper
     return decorator
 
-# === Flask Routes ===
-
 @app.route('/accinfo')
-@cached_endpoint()
 def get_account_info():
     uid = request.args.get('uid')
     if not uid:
         return jsonify({"error": "Please provide UID."}), 400
 
-    # Check cached region for UID
     if uid in uid_region_cache:
         try:
-            return_data = asyncio.run(GetAccountInformation(uid, "7", uid_region_cache[uid], "/GetPlayerPersonalShow"))
-            formatted_json = json.dumps(return_data, indent=2, ensure_ascii=False)
-            return formatted_json, 200, {'Content-Type': 'application/json; charset=utf-8'}
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return_data = loop.run_until_complete(GetAccountInformation(uid, "7", uid_region_cache[uid], "/GetPlayerPersonalShow"))
+            loop.close()
+            return_data = add_prime_level_to_response(return_data)
+            return jsonify(return_data)
         except:
-            pass  # fallback to testing all regions
+            pass
 
     for region in SUPPORTED_REGIONS:
         try:
-            return_data = asyncio.run(GetAccountInformation(uid, "7", region, "/GetPlayerPersonalShow"))
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return_data = loop.run_until_complete(GetAccountInformation(uid, "7", region, "/GetPlayerPersonalShow"))
+            loop.close()
             uid_region_cache[uid] = region
-            formatted_json = json.dumps(return_data, indent=2, ensure_ascii=False)
-            return formatted_json, 200, {'Content-Type': 'application/json; charset=utf-8'}
+            return_data = add_prime_level_to_response(return_data)
+            return jsonify(return_data)
         except:
             continue
 
     return jsonify({"error": "UID not found in any region."}), 404
 
 @app.route('/refresh', methods=['GET','POST'])
-def refresh_tokens_endpoint():
+def refresh_tokens():
     try:
-        asyncio.run(initialize_tokens())
-        return jsonify({'message':'Tokens refreshed for all regions.'}),200
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        for region in SUPPORTED_REGIONS:
+            loop.run_until_complete(create_jwt(region))
+        loop.close()
+        return jsonify({'message': 'Tokens refreshed for all regions'}), 200
     except Exception as e:
-        return jsonify({'error': f'Refresh failed: {e}'}),500
+        return jsonify({'error': f'Refresh failed: {e}'}), 500
 
-# === Startup ===
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({
+        'status': 'active',
+        'endpoints': ['/accinfo?uid=UID', '/refresh'],
+        'supported_regions': list(SUPPORTED_REGIONS)
+    })
 
-async def startup():
-    await initialize_tokens()
-    asyncio.create_task(refresh_tokens_periodically())
-
+import asyncio
 if __name__ == '__main__':
-    asyncio.run(startup())
     app.run(host='0.0.0.0', port=5000, debug=True)
+# INFO API SRC BYY 
+# POWERED BY : @STAR_GMR
+# CHANNEL : @STAR_METHODE
