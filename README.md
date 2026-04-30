@@ -6,161 +6,145 @@
 ```  
 
 ## Example API Request  
-```plaintext  
-https://gst-info.vercel.app/player-info?region=SG&uid=338277714  
+```plaintext without region   
+https://stargamerff.qzz.io/accinfo?uid=1868812498  
+```  
+```plaintext with region   
+https://stargamerff.qzz.io/accinfo?uid=1868812498&region=ind  
 ```  
 
 ## Example Response  
 ```json  
-{  
-    "basicInfo": {  
-        "accountId": "338277714",  
-        "accountType": 1,  
-        "nickname": "Duy Vinh",  
-        "region": "VN",  
-        "level": 69,  
-        "exp": 2696267,  
-        "bannerId": 901000089,  
-        "headPic": 902000094,  
-        "rank": 323,  
-        "rankingPoints": 4703,  
-        "badgeCnt": 41,  
-        "badgeId": 1001000085,  
-        "seasonId": 45,  
-        "liked": 43010,  
-        "lastLoginAt": "1749865935",  
-        "csRank": 317,  
-        "csRankingPoints": 69,  
-        "weaponSkinShows": [  
-            907101304  
-        ],  
-        "pinId": 910002803,  
-        "maxRank": 323,  
-        "csMaxRank": 317,  
-        "accountPrefers": {  
-            "brPregameShowChoices": [  
-                1  
-            ]  
-        },  
-        "createAt": "1533628526",  
-        "title": 904090026,  
-        "externalIconInfo": {  
-            "status": "ExternalIconStatus_NOT_IN_USE",  
-            "showType": "ExternalIconShowType_FRIEND"  
-        },  
-        "releaseVersion": "OB49",  
-        "showBrRank": true,  
-        "showCsRank": true,  
-        "socialHighLightsWithBasicInfo": {}  
-    },  
-    "profileInfo": {  
-        "avatarId": 102000004,  
-        "skinColor": 33,  
-        "clothes": [  
-            205049027,  
-            214045000,  
-            203000485,  
-            204000267,  
-            211000240  
-        ],  
-        "equipedSkills": [  
-            16,  
-            5801,  
-            8,  
-            1,  
-            16,  
-            304,  
-            8,  
-            2,  
-            16,  
-            2506,  
-            8,  
-            3,  
-            16,  
-            5201  
-        ],  
-        "isSelected": true,  
-        "isSelectedAwaken": true  
-    },  
-    "clanBasicInfo": {  
-        "clanId": "3067571084",  
-        "clanName": "Rắn Độc fi5",  
-        "captainId": "1389031980",  
-        "clanLevel": 3,  
-        "capacity": 55,  
-        "memberNum": 23  
-    },  
-    "captainBasicInfo": {  
-        "accountId": "1389031980",  
-        "accountType": 1,  
-        "nickname": "Exanimateᴗ",  
-        "region": "VN",  
-        "level": 81,  
-        "exp": 7457894,  
-        "bannerId": 901029016,  
-        "headPic": 902000022,  
-        "rank": 318,  
-        "rankingPoints": 3053,  
-        "badgeCnt": 62,  
-        "badgeId": 1001000085,  
-        "seasonId": 45,  
-        "liked": 29306,  
-        "lastLoginAt": "1749843937",  
-        "csRank": 322,  
-        "csRankingPoints": 114,  
-        "weaponSkinShows": [  
-            907192607,  
-            912034003  
-        ],  
-        "pinId": 910002901,  
-        "maxRank": 318,  
-        "csMaxRank": 322,  
-        "accountPrefers": {},  
-        "createAt": "1567648917",  
-        "title": 904590058,  
-        "externalIconInfo": {  
-            "status": "ExternalIconStatus_NOT_IN_USE",  
-            "showType": "ExternalIconShowType_FRIEND"  
-        },  
-        "releaseVersion": "OB49",  
-        "showBrRank": true,  
-        "showCsRank": true,  
-        "socialHighLightsWithBasicInfo": {}  
-    },  
-    "petInfo": {  
-        "id": 1300000041,  
-        "name": "Duy　Vinh",  
-        "level": 7,  
-        "exp": 6015,  
-        "isSelected": true,  
-        "skinId": 1310000044,  
-        "selectedSkillId": 1315000012  
-    },  
-    "socialInfo": {  
-        "accountId": "338277714",  
-        "language": "Language_VIETNAMESE",  
-        "signature": "Mùa hè đã đến k12 có míc",  
-        "rankShow": "RankShow_BR"  
-    },  
-    "diamondCostRes": {  
-        "diamondCost": 390  
-    },  
-    "creditScoreInfo": {  
-        "creditScore": 100,  
-        "rewardState": "REWARD_STATE_UNCLAIMED",  
-        "periodicSummaryEndTime": "1749773520"  
-    }  
+{
+  "basicInfo": {
+    "accountId": "1868812498",
+    "accountPrefers": {
+
+    },
+    "accountType": 1,
+    "badgeCnt": 141,
+    "badgeId": 1001000095,
+    "bannerId": 901042019,
+    "createAt": "1585145536",
+    "csMaxRank": 324,
+    "csRank": 324,
+    "csRankingPoints": 218,
+    "exp": 3833637,
+    "externalIconInfo": {
+      "showType": "ExternalIconShowType_FRIEND",
+      "status": "ExternalIconStatus_NOT_IN_USE"
+    },
+    "hasElitePass": true,
+    "headPic": 902042016,
+    "lastLoginAt": "1777334549",
+    "level": 73,
+    "liked": 32416,
+    "maxRank": 330,
+    "nickname": "RAM┋ＶＲＡＪ",
+    "pinId": 910000005,
+    "primeInfo": {
+      "primeLevel": 7
+    },
+    "rank": 330,
+    "rankingPoints": 10009,
+    "region": "IND",
+    "releaseVersion": "OB53",
+    "seasonId": 50,
+    "showBrRank": true,
+    "showCsRank": true,
+    "showRank": true,
+    "socialHighLightsWithBasicInfo": {
+
+    },
+    "title": 904090026,
+    "weaponSkinShows": [907194214, 912034001, 914051001]
+  },
+  "captainBasicInfo": {
+    "accountId": "1868812498",
+    "accountPrefers": {
+
+    },
+    "accountType": 1,
+    "badgeCnt": 141,
+    "badgeId": 1001000095,
+    "bannerId": 901042019,
+    "createAt": "1585145536",
+    "csMaxRank": 324,
+    "csRank": 324,
+    "csRankingPoints": 218,
+    "exp": 3833637,
+    "externalIconInfo": {
+      "showType": "ExternalIconShowType_FRIEND",
+      "status": "ExternalIconStatus_NOT_IN_USE"
+    },
+    "hasElitePass": true,
+    "headPic": 902042016,
+    "lastLoginAt": "1777334549",
+    "level": 73,
+    "liked": 32416,
+    "maxRank": 330,
+    "nickname": "RAM┋ＶＲＡＪ",
+    "pinId": 910000005,
+    "primeInfo": {
+      "primeLevel": 7
+    },
+    "rank": 330,
+    "rankingPoints": 10009,
+    "region": "IND",
+    "releaseVersion": "OB53",
+    "seasonId": 50,
+    "showBrRank": true,
+    "showCsRank": true,
+    "showRank": true,
+    "socialHighLightsWithBasicInfo": {
+
+    },
+    "title": 904090026,
+    "weaponSkinShows": [907194214, 912034001, 914051001]
+  },
+  "clanBasicInfo": {
+    "capacity": 55,
+    "captainId": "1868812498",
+    "clanId": "3019453921",
+    "clanLevel": 7,
+    "clanName": "┋रामराज्य┋",
+    "memberNum": 51
+  },
+  "creditScoreInfo": {
+    "creditScore": 100,
+    "periodicSummaryEndTime": "1777293415",
+    "rewardState": "REWARD_STATE_UNCLAIMED"
+  },
+  "diamondCostRes": {
+    "diamondCost": 390
+  },
+  "petInfo": {
+    "exp": 6157,
+    "id": 1300000101,
+    "isSelected": true,
+    "level": 7,
+    "name": "•~PATEL•",
+    "selectedSkillId": 1315000009,
+    "skinId": 1310000102
+  },
+  "profileInfo": {
+    "avatarId": 102000007,
+    "clothes": [214000017, 203000517, 204000299, 205000255, 211000705, 211000273],
+    "equipedSkills": [16, 3102, 8, 1, 16, 7506, 8, 2, 16, 4601, 8, 3, 16, 4806],
+    "isSelected": true,
+    "isSelectedAwaken": true,
+    "skinColor": 50
+  },
+  "socialInfo": {
+    "accountId": "1868812498",
+    "gender": "Gender_MALE",
+    "language": "Language_HINDI",
+    "modePrefer": "ModePrefer_CS",
+    "rankShow": "RankShow_CS",
+    "signature": "Kathiyawad\nGuild Players Avtar Banner Change"
+  }
 }  
 ```  
-
-## Getting Started  
-
-### Clone the Repository  
-To clone the repository, run the following command:  
-```bash  
-git clone https://github.com/duyvinh09/FreeFireInfoSite.git  
-```  
-
-### Deploy via Vercel  
-You can deploy the project using the link below:  
-[![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/duyvinh09/FreeFireInfoSite)  
+# INFO API SRC BYY 
+# POWERED BY : @STAR_GMR
+# CHANNEL : @STAR_METHODE
